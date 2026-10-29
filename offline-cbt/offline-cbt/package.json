@@ -1,0 +1,47 @@
+{
+  "name": "offline-cbt",
+  "version": "1.0.0",
+  "description": "Offline CBT Module for Schools",
+  "main": "electron-main.js",
+  "scripts": {
+    "server": "node server/index.js",
+    "start": "electron .",
+    "build:win": "electron-builder --win"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.8.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.infolab.offlinecbt",
+    "productName": "Infolab Offline CBT",
+    "copyright": "Copyright 2026 Infolab Technology Service Ltd",
+    "directories": { "output": "dist-exe" },
+    "files": [
+      "electron-main.js",
+      "server/**/*",
+      "client/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Infolab Offline CBT"
+    }
+  }
+}

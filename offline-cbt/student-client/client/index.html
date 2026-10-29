@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infolab CBT — Student Client</title>
+<style>
+  :root{--navy:#0A1628;--teal:#00B4A6;--teal-d:#008F83;--bg:#0f1623;--card:#162132;--border:#27344a;--text:#e7ecf3;--muted:#8a96ab;--red:#ef4444;--green:#22c55e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:420px;width:100%;}
+  .card h1{font-size:20px;margin-bottom:6px;text-align:center;} .card h1 span{color:var(--teal);}
+  .card p.sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;line-height:1.6;}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;font-weight:600;}
+  input{width:100%;background:#0c1320;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+  button{width:100%;background:var(--teal);color:#fff;border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;}
+  button:hover{background:var(--teal-d);}
+  button.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);margin-top:10px;}
+  .error{color:var(--red);font-size:13px;margin-bottom:12px;text-align:center;}
+  .connected-badge{font-size:12px;color:var(--green);text-align:center;margin-bottom:16px;background:rgba(34,197,94,0.1);padding:8px;border-radius:8px;}
+  .exam-card{background:#0c1320;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .exam-card .info h4{font-size:14px;margin-bottom:4px;} .exam-card .info p{font-size:12px;color:var(--muted);}
+  .exam-card button{width:auto;padding:8px 16px;font-size:12px;}
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-done{background:rgba(34,197,94,0.15);color:#86efac;}
+
+  #examUI{display:none;min-height:100vh;}
+  .exam-header{background:var(--navy);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+  .exam-header h2{font-size:15px;} .timer{font-size:18px;font-weight:800;color:var(--teal);font-family:monospace;}
+  .exam-body{max-width:760px;margin:0 auto;padding:28px;}
+  .q-block{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px;}
+  .q-block .q-num{font-size:12px;color:var(--teal);font-weight:700;margin-bottom:8px;}
+  .q-block .q-text{font-size:15px;margin-bottom:18px;line-height:1.6;}
+  .opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+  .opt:hover{border-color:var(--teal);}
+  .opt.selected{border-color:var(--teal);background:rgba(0,180,166,0.1);}
+  .opt input{width:auto;margin:0;} .opt span{font-size:14px;}
+  textarea.theory-ans{width:100%;min-height:120px;background:#0c1320;border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-size:14px;font-family:inherit;}
+  .submit-bar{position:sticky;bottom:0;background:var(--navy);padding:16px 28px;display:flex;justify-content:center;border-top:1px solid var(--border);}
+  .submit-bar button{max-width:240px;}
+
+  #resultUI{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;}
+  .result-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:420px;width:100%;text-align:center;}
+  .result-card .score{font-size:48px;font-weight:800;color:var(--teal);margin:16px 0;}
+
+  .top-corner{position:fixed;top:16px;right:16px;font-size:12px;color:var(--muted);cursor:pointer;}
+  .top-corner:hover{color:var(--teal);}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Server connection setup -->
+<div id="connectUI" class="center-wrap">
+  <div class="card">
+    <h1>Infolab <span>CBT</span></h1>
+    <p class="sub">Student Client — enter your exam server's IP address. Ask your teacher or admin if you don't know it.</p>
+    <div id="connectError" class="error" style="display:none"></div>
+    <label>Server IP Address</label>
+    <input id="serverIpInput" placeholder="e.g. 192.168.1.45">
+    <button onclick="connectToServer()">Connect</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: Admission number login -->
+<div id="loginUI" class="center-wrap" style="display:none">
+  <div class="card">
+    <span class="top-corner" onclick="changeServer()">⚙ Change Server</span>
+    <h1>Student <span>Portal</span></h1>
+    <div class="connected-badge" id="connectedBadge"></div>
+    <p class="sub">Enter your admission number to see available exams</p>
+    <div id="loginError" class="error" style="display:none"></div>
+    <label>Admission Number</label>
+    <input id="admNoInput" placeholder="e.g. STU001">
+    <button onclick="checkExams()">View My Exams</button>
+  </div>
+</div>
+
+<div id="examListUI" class="center-wrap" style="display:none">
+  <div class="card" style="max-width:480px">
+    <h1 id="studentNameTitle">Welcome</h1>
+    <p class="sub" id="studentClassSub"></p>
+    <div id="examListContainer"></div>
+    <div id="examListEmpty" style="display:none;text-align:center;color:var(--muted);font-size:13px;padding:20px 0">No exams available right now.</div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn-ghost" style="flex:1" onclick="backToLogin()">← Back</button>
+      <button style="flex:1" onclick="refreshExamList()">⟳ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div id="examUI">
+  <div class="exam-header">
+    <h2 id="examHeaderTitle"></h2>
+    <div class="timer" id="timerDisplay">--:--</div>
+  </div>
+  <div class="exam-body" id="examBody"></div>
+  <div class="submit-bar"><button onclick="submitExam()">Submit Exam</button></div>
+</div>
+
+<div id="resultUI" class="center-wrap">
+  <div class="result-card">
+    <h1>Exam Submitted!</h1>
+    <div class="score" id="resultScore">--/--</div>
+    <p style="color:var(--muted);font-size:13px" id="resultDetail"></p>
+    <button style="margin-top:24px" onclick="finishAndReturn()">Done</button>
+  </div>
+</div>
+
+<script>
+let API = ''; // built dynamically once the server IP is known, e.g. http://192.168.1.45:4000/api/cbt
+let currentStudent = null, currentExam = null, currentAttempt = null, currentQuestions = [];
+let answers = {}, timerInterval = null, secondsLeft = 0;
+
+// ─── Connection setup ──────────────────────────────────────
+function getSavedServerIp(){
+  return localStorage.getItem('cbt_server_ip') || '';
+}
+
+function buildApiBase(ipAndMaybePort){
+  let value = ipAndMaybePort.trim();
+  // Allow the school to type just an IP ("192.168.1.45") or IP:port ("192.168.1.45:4000")
+  if(!value.includes(':')) value = value + ':4000';
+  return 'http://' + value + '/api/cbt';
+}
+
+async function connectToServer(){
+  const ip = document.getElementById('serverIpInput').value.trim();
+  const errEl = document.getElementById('connectError');
+  errEl.style.display = 'none';
+  if(!ip) return;
+
+  const candidateApi = buildApiBase(ip);
+  try{
+    // Health check lives outside /api/cbt, so derive it from the same base
+    const healthUrl = candidateApi.replace('/api/cbt', '/api/health');
+    const res = await fetch(healthUrl, { signal: AbortSignal.timeout(5000) });
+    if(!res.ok) throw new Error('Server responded but something looks wrong.');
+    await res.json();
+
+    API = candidateApi;
+    localStorage.setItem('cbt_server_ip', ip);
+    showLoginScreen(ip);
+  } catch(e){
+    errEl.textContent = 'Could not reach a server at that address. Check the IP address, and make sure both computers are on the same Wi-Fi/network.';
+    errEl.style.display = 'block';
+  }
+}
+
+function showLoginScreen(ip){
+  document.getElementById('connectUI').style.display = 'none';
+  document.getElementById('loginUI').style.display = 'flex';
+  document.getElementById('connectedBadge').textContent = '🟢 Connected to ' + ip;
+}
+
+function changeServer(){
+  document.getElementById('loginUI').style.display = 'none';
+  document.getElementById('connectUI').style.display = 'flex';
+  document.getElementById('serverIpInput').value = getSavedServerIp();
+}
+
+function backToLogin(){
+  currentStudent = null;
+  document.getElementById('admNoInput').value = '';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('examListUI').style.display = 'none';
+  document.getElementById('loginUI').style.display = 'flex';
+}
+
+// "Refresh" now means: log this student out and return to the login
+// screen clean, so the next student can enter their own admission number.
+function refreshExamList(){
+  backToLogin();
+}
+
+function finishAndReturn(){
+  document.getElementById('resultUI').style.display = 'none';
+  // Go straight back to the exam list (not the login screen) — the student
+  // is already identified, so just refresh their list of available exams.
+  // This lets them attempt the next subject immediately, without re-entering
+  // their admission number or restarting the app.
+  if(currentStudent && currentStudent.adm_no){
+    document.getElementById('examListUI').style.display = 'flex';
+    document.getElementById('admNoInput').value = currentStudent.adm_no;
+    checkExams();
+  } else {
+    // Fallback — shouldn't normally happen, but keeps old behaviour as a safety net
+    document.getElementById('loginUI').style.display = 'flex';
+    document.getElementById('admNoInput').value = '';
+  }
+}
+
+// ─── API helper ────────────────────────────────────────────
+async function api(path, method='GET', body=null){
+  const opts = { method };
+  if(body){ opts.headers={'Content-Type':'application/json'}; opts.body=JSON.stringify(body); }
+  let res;
+  try{
+    res = await fetch(API+path, opts);
+  } catch(networkErr){
+    throw new Error('Lost connection to the server. Check your network and try again.');
+  }
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error||'Request failed');
+  return data;
+}
+
+// ─── Exam flow (same logic as the admin-hosted student portal) ─────
+async function checkExams(){
+  const admNo = document.getElementById('admNoInput').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display='none';
+  if(!admNo) return;
+  try{
+    const data = await api('/student/available?admNo='+encodeURIComponent(admNo));
+    currentStudent = data.student;
+    document.getElementById('loginUI').style.display='none';
+    document.getElementById('examListUI').style.display='flex';
+    document.getElementById('studentNameTitle').textContent = 'Hi, ' + currentStudent.name;
+    document.getElementById('studentClassSub').textContent = currentStudent.class_name || '';
+    const exams = data.exams;
+    document.getElementById('examListEmpty').style.display = exams.length ? 'none':'block';
+    document.getElementById('examListContainer').innerHTML = exams.map(e=>{
+      const done = e.attempt_status === 'submitted';
+      return `
+        <div class="exam-card">
+          <div class="info">
+            <h4>${e.title}</h4>
+            <p>${e.subject_name||''} . ${e.duration_minutes} mins . ${e.total_marks} marks</p>
+          </div>
+          ${done ? '<span class="badge badge-done">Completed</span>' : `<button onclick="startExam(${e.id})">Start</button>`}
+        </div>`;
+    }).join('');
+  } catch(e){
+    errEl.textContent = e.message; errEl.style.display='block';
+  }
+}
+
+async function startExam(examId){
+  try{
+    const data = await api('/student/start','POST',{admNo:currentStudent.adm_no, examId});
+    currentExam = data.exam;
+    currentAttempt = data.attempt;
+    currentQuestions = data.questions;
+    answers = {};
+    if(data.savedAnswers){
+      data.savedAnswers.forEach(a=>{ answers[a.question_id] = a.answer; });
+    }
+    // Start timer HERE — once only when exam begins, not on every render
+    secondsLeft = (currentExam.duration_minutes||60) * 60;
+    startTimer();
+    renderExam();
+  } catch(e){ alert(e.message); }
+}
+
+function renderExam(){
+  document.getElementById('examListUI').style.display='none';
+  document.getElementById('examUI').style.display='block';
+  document.getElementById('examHeaderTitle').textContent = currentExam.title;
+
+  document.getElementById('examBody').innerHTML = currentQuestions.map((q,i)=>{
+    const imageHtml = q.image_url ? `<div style="margin-bottom:16px"><img src="${q.image_url}" style="max-width:100%;max-height:360px;border-radius:10px;border:1px solid var(--border)"></div>` : '';
+    if(q.question_type === 'objective'){
+      const opts = ['A','B','C','D'];
+      return `
+        <div class="q-block">
+          <div class="q-num">Question ${i+1} of ${currentQuestions.length} . ${q.marks} mark(s)</div>
+          <div class="q-text">${q.question_text}</div>
+          ${imageHtml}
+          ${opts.map(letter=>{
+            const optText = q['option_'+letter.toLowerCase()];
+            if(!optText) return '';
+            const selected = answers[q.id]===letter;
+            return `
+              <div class="opt ${selected?'selected':''}" onclick="selectAnswer(${q.id},'${letter}')">
+                <input type="radio" name="q${q.id}" ${selected?'checked':''} readonly>
+                <span><strong>${letter}.</strong> ${optText}</span>
+              </div>`;
+          }).join('')}
+        </div>`;
+    } else {
+      return `
+        <div class="q-block">
+          <div class="q-num">Question ${i+1} of ${currentQuestions.length} . ${q.marks} mark(s) . Theory</div>
+          <div class="q-text">${q.question_text}</div>
+          ${imageHtml}
+          <textarea class="theory-ans" placeholder="Type your answer..." onchange="saveTheory(${q.id}, this.value)">${answers[q.id]||''}</textarea>
+        </div>`;
+    }
+  }).join('');
+
+  // Timer is started in startExam() — do NOT reset it here or it resets
+  // every time a student selects an answer (which triggers renderExam)
+}
+
+function selectAnswer(qid, letter){
+  answers[qid] = letter;
+  api('/student/save-answer','POST',{attemptId:currentAttempt.id, questionId:qid, answer:letter}).catch(()=>{});
+  renderExam();
+}
+
+function saveTheory(qid, text){
+  answers[qid] = text;
+  api('/student/save-answer','POST',{attemptId:currentAttempt.id, questionId:qid, answer:text}).catch(()=>{});
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(()=>{
+    secondsLeft--;
+    updateTimerDisplay();
+    if(secondsLeft <= 0){ clearInterval(timerInterval); submitExam(true); }
+  }, 1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+  document.getElementById('timerDisplay').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+async function submitExam(auto){
+  if(!auto && !confirm('Submit exam? You cannot change answers after submitting.')) return;
+  clearInterval(timerInterval);
+  const timeTaken = Math.ceil(((currentExam.duration_minutes*60) - secondsLeft) / 60);
+  const answerList = Object.keys(answers).map(qid=>({ questionId: parseInt(qid), answer: answers[qid] }));
+  try{
+    const result = await api('/student/submit','POST',{ attemptId: currentAttempt.id, answers: answerList, timeTaken });
+    document.getElementById('examUI').style.display='none';
+    document.getElementById('resultUI').style.display='flex';
+    document.getElementById('resultScore').textContent = result.objectiveScore + '/' + result.objectiveTotal;
+    document.getElementById('resultDetail').textContent = 'Objective score: ' + result.objectiveScore + ' out of ' + result.objectiveTotal + ' marks. Theory questions will be marked by your teacher.';
+  } catch(e){ alert(e.message); }
+}
+
+document.getElementById('admNoInput').addEventListener('keypress', e=>{ if(e.key==='Enter') checkExams(); });
+document.getElementById('serverIpInput').addEventListener('keypress', e=>{ if(e.key==='Enter') connectToServer(); });
+
+// ─── Init — auto-reconnect if a server IP was saved from last time ───
+(function init(){
+  const savedIp = getSavedServerIp();
+  if(savedIp){
+    document.getElementById('serverIpInput').value = savedIp;
+    connectToServer();
+  }
+})();
+</script>
+</body>
+</html>

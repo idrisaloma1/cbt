@@ -1,0 +1,34 @@
+{
+  "name": "infolab-cbt-student",
+  "version": "1.0.0",
+  "description": "Infolab Offline CBT - Student Client",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.infolab.cbtstudent",
+    "productName": "Infolab CBT Student",
+    "copyright": "Copyright 2026 Infolab Technology Service Ltd",
+    "directories": { "output": "dist-exe" },
+    "files": [
+      "electron-main.js",
+      "client/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Infolab CBT Student"
+    }
+  }
+}

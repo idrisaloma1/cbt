@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline CBT — Admin</title>
+<style>
+  :root{--navy:#0A1628;--teal:#00B4A6;--teal-d:#008F83;--bg:#0f1623;--card:#162132;--border:#27344a;--text:#e7ecf3;--muted:#8a96ab;--red:#ef4444;--green:#22c55e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:var(--navy);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+  .topbar h1{font-size:18px;font-weight:700;} .topbar h1 span{color:var(--teal);}
+  .topbar a{color:var(--teal);font-size:13px;text-decoration:none;font-weight:600;}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px;}
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{padding:9px 18px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;}
+  .tab.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px;}
+  .card h2{font-size:15px;margin-bottom:16px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  input,select,textarea{background:#0c1320;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;}
+  input,select{flex:1;min-width:140px;}
+  textarea{width:100%;min-height:70px;resize:vertical;}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px;font-weight:600;}
+  .field{flex:1;min-width:160px;}
+  button{cursor:pointer;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;font-family:inherit;}
+  .btn-teal{background:var(--teal);color:#fff;} .btn-teal:hover{background:var(--teal-d);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-red{background:rgba(239,68,68,0.15);color:#fca5a5;}
+  .btn-sm{padding:6px 12px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:10px 12px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-draft{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+  .badge-published{background:rgba(34,197,94,0.15);color:#86efac;}
+  .badge-closed{background:rgba(239,68,68,0.15);color:#fca5a5;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;display:none;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+  .toast.show{display:block;}
+  .toast.error{background:var(--red);}
+  .upload-box{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;}
+  .upload-box:hover{border-color:var(--teal);}
+  .q-item{background:#0c1320;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+  .q-item .q-text{font-size:13px;margin-bottom:8px;font-weight:600;}
+  .q-item .q-opts{font-size:12px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .q-item .q-opts .correct{color:var(--green);font-weight:700;}
+  .hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+  .empty{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:480px;width:90%;max-height:85vh;overflow-y:auto;}
+  .modal h3{font-size:16px;margin-bottom:18px;}
+  .activate-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .activate-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:420px;width:100%;}
+  .activate-card h1{font-size:20px;margin-bottom:6px;text-align:center;} .activate-card h1 span{color:var(--teal);}
+  .activate-card p.sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;line-height:1.6;}
+  .activate-card input{width:100%;margin-bottom:14px;}
+  .activate-card button{width:100%;padding:13px;font-size:14px;}
+  .activate-error{color:var(--red);font-size:13px;margin-bottom:14px;text-align:center;}
+
+  /* TRIAL BANNER */
+  #trialBanner { display:none; align-items:center; justify-content:space-between; gap:12px; padding:8px 28px; font-size:12px; font-family:inherit; flex-wrap:wrap; }
+  #trialBanner.trial-ok       { display:flex !important; background:rgba(0,180,166,0.1); border-bottom:1px solid rgba(0,180,166,0.25); color:#00B4A6; }
+  #trialBanner.trial-warn     { display:flex !important; background:rgba(234,179,8,0.1); border-bottom:1px solid rgba(234,179,8,0.25); color:#fbbf24; }
+  #trialBanner.trial-critical { display:flex !important; background:rgba(239,68,68,0.1); border-bottom:1px solid rgba(239,68,68,0.25); color:#fca5a5; }
+  #trialBanner .tb-left { display:flex; align-items:center; gap:8px; font-weight:600; }
+  #trialBanner .tb-btn  { background:var(--teal); color:#fff; border:none; border-radius:6px; padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div id="activateScreen" class="activate-wrap" style="display:none">
+  <div class="activate-card">
+    <h1>Infolab <span>Offline CBT</span></h1>
+    <p class="sub">This software needs to be activated before use. Enter the activation key you received from Infolab Technology Service.</p>
+    <div id="activateError" class="activate-error" style="display:none"></div>
+    <input id="activateSchoolName" placeholder="School name (optional)">
+    <input id="activateKey" placeholder="e.g. IFLB-CBT-XXXX-XXXX" style="text-transform:uppercase">
+    <button class="btn-teal" onclick="activateApp()">Activate</button>
+    <p class="sub" style="margin-top:18px;margin-bottom:0">Don't have a key? Contact Infolab Technology Service to purchase.</p>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none">
+
+<div class="topbar">
+  <h1>Offline <span>CBT</span></h1>
+  <a href="/student" target="_blank">Open Student Portal →</a>
+</div>
+
+<div id="trialBanner">
+  <div class="tb-left"><span id="trialIcon"></span>&nbsp;<span id="trialMsg"></span></div>
+  <button class="tb-btn" onclick="showActivateScreen()">🔑 Activate Full Version</button>
+</div>
+
+<div class="wrap">
+  <div class="card" id="networkInfoCard" style="border-color:var(--teal);background:rgba(0,180,166,0.06)">
+    <h2 style="margin-bottom:10px">🌐 Network Info — for Student Computers</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Give this IP address to students. They'll enter it in the Student Client app on their own computer, along with their admission number.</p>
+    <div id="networkInfoContent" style="font-size:20px;font-weight:700;color:var(--teal)">Detecting...</div>
+    <div id="networkInfoWarning" style="display:none;color:var(--red);font-size:13px;margin-top:8px"></div>
+    <div class="hint" style="margin-top:12px">Make sure this PC and all student computers are connected to the same Wi-Fi or network. If students can't connect, check that Windows Firewall is allowing this app (see README).</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="exams" onclick="switchTab('exams')">📝 Exams</button>
+    <button class="tab" data-tab="setup" onclick="switchTab('setup')">⚙️ Setup (Classes/Subjects/Students)</button>
+    <button class="tab" data-tab="teachers" onclick="switchTab('teachers')">👩‍🏫 Teacher Accounts</button>
+    <button class="tab" data-tab="results" onclick="switchTab('results')">📊 Results</button>
+  </div>
+
+  <!-- EXAMS TAB -->
+  <div id="tab-exams">
+    <div class="card">
+      <h2>Create New Exam</h2>
+      <div class="row">
+        <div class="field"><label>Title</label><input id="exTitle" placeholder="e.g. Mathematics Mid-Term"></div>
+        <div class="field"><label>Subject</label><select id="exSubject"></select></div>
+        <div class="field"><label>Class</label><select id="exClass"></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Session</label><input id="exSession" placeholder="2025/2026" value="2025/2026"></div>
+        <div class="field"><label>Term</label><select id="exTerm"><option value="1">First Term</option><option value="2">Second Term</option><option value="3">Third Term</option></select></div>
+        <div class="field"><label>Duration (minutes)</label><input id="exDuration" type="number" value="60"></div>
+        <div class="field"><label>Total Marks</label><input id="exMarks" type="number" value="100"></div>
+      </div>
+      <div class="row"><div class="field" style="flex:1 0 100%"><label>Instructions (optional)</label><textarea id="exInstructions" placeholder="Answer all questions..."></textarea></div></div>
+      <button class="btn-teal" onclick="createExam()">+ Create Exam</button>
+    </div>
+
+    <div class="card">
+      <h2>All Exams</h2>
+      <table id="examsTable">
+        <thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Questions</th><th>Submissions</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="examsEmpty" class="empty" style="display:none">No exams yet. Create one above.</div>
+    </div>
+  </div>
+
+  <!-- SETUP TAB -->
+  <div id="tab-setup" style="display:none">
+    <div class="card">
+      <h2 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleClassesList()">
+        <span>Classes <span id="classesCount" style="color:var(--muted);font-weight:400;font-size:12px"></span></span>
+        <span id="classesToggleIcon" style="font-size:12px;color:var(--muted)">▾</span>
+      </h2>
+      <div class="row"><input id="newClass" placeholder="e.g. JSS 1A" style="max-width:260px"><button class="btn-teal" onclick="addClass()">+ Add Class</button></div>
+      <div id="classesListWrap" style="max-height:260px;overflow-y:auto">
+        <table><tbody id="classesList"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleSubjectsList()">
+        <span>Subjects <span id="subjectsCount" style="color:var(--muted);font-weight:400;font-size:12px"></span></span>
+        <span id="subjectsToggleIcon" style="font-size:12px;color:var(--muted)">▾</span>
+      </h2>
+      <div class="row"><input id="newSubject" placeholder="e.g. Mathematics" style="max-width:260px"><button class="btn-teal" onclick="addSubject()">+ Add Subject</button></div>
+      <div id="subjectsListWrap" style="max-height:260px;overflow-y:auto">
+        <table><tbody id="subjectsList"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Students</h2>
+      <div class="row">
+        <input id="newAdmNo" placeholder="Admission No." style="max-width:160px">
+        <input id="newStudentName" placeholder="Full Name" style="max-width:220px">
+        <select id="newStudentClass" style="max-width:160px"></select>
+        <button class="btn-teal" onclick="addStudent()">+ Add Student</button>
+      </div>
+      <div class="hint">Or paste CSV (AdmNo,Name,Class) below for bulk add — one per line.</div>
+      <textarea id="bulkStudents" placeholder="STU001,John Doe,JSS1&#10;STU002,Jane Smith,JSS1" style="margin-top:8px"></textarea>
+      <button class="btn-ghost btn-sm" style="margin-top:8px" onclick="bulkAddStudents()">Bulk Add</button>
+
+      <!-- Class filter -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:20px;margin-bottom:8px;flex-wrap:wrap;cursor:pointer" onclick="toggleStudentsList(event)">
+        <h2 style="margin:0">Student List</h2>
+        <select id="filterClass" onchange="loadStudents()" style="max-width:200px;flex:unset" onclick="event.stopPropagation()">
+          <option value="">All Classes</option>
+        </select>
+        <span id="studentCount" style="font-size:12px;color:var(--muted);margin-left:auto"></span>
+        <button class="btn-ghost btn-sm" style="font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="event.stopPropagation();promoteAllStudents()">🎓 Promote All Students</button>
+        <span id="studentsToggleIcon" style="font-size:12px;color:var(--muted)">▾</span>
+      </div>
+      <div id="studentsListWrap" style="max-height:320px;overflow-y:auto">
+        <table><thead><tr><th>#</th><th>Adm No</th><th>Name</th><th>Class</th><th></th></tr></thead><tbody id="studentsList"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHERS TAB -->
+  <div id="tab-teachers" style="display:none">
+    <div class="card">
+      <h2>Create Teacher Account</h2>
+      <div class="row">
+        <input id="newTeacherName" placeholder="Full Name" style="max-width:220px">
+        <input id="newTeacherUsername" placeholder="Username" style="max-width:180px">
+        <input id="newTeacherPassword" type="text" placeholder="Password (min 4 chars)" style="max-width:200px">
+        <select id="newTeacherClass" style="max-width:180px"></select>
+        <button class="btn-teal" onclick="addTeacher()">+ Create Account</button>
+      </div>
+      <div class="hint">Give the teacher their username and password. They log in at <strong>/teacher</strong> and will only see exams for their assigned class. Register classes first under the Setup tab if the dropdown is empty.</div>
+    </div>
+    <div class="card">
+      <h2>All Teacher Accounts</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Username</th><th>Class</th><th>Exams Created</th><th></th></tr></thead>
+        <tbody id="teachersList"></tbody>
+      </table>
+      <div id="teachersEmpty" class="empty" style="display:none">No teacher accounts yet.</div>
+    </div>
+  </div>
+
+  <!-- RESULTS TAB -->
+  <div id="tab-results" style="display:none">
+    <div class="card">
+      <h2>Results by Subject — All Classes &amp; Teachers</h2>
+      <div class="row">
+        <select id="adminResultsSubjectPicker" style="max-width:280px" onchange="loadAdminSubjectResults()"></select>
+      </div>
+      <div id="adminResultsContainer"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ── Generic Confirm Modal ── -->
+<div id="confirmModal" class="modal-bg" style="display:none" onclick="if(event.target===this)closeConfirm(false)">
+  <div class="modal" style="max-width:400px">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg" style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-ghost" onclick="closeConfirm(false)">Cancel</button>
+      <button id="confirmOkBtn" class="btn-red" onclick="closeConfirm(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Generic Prompt Modal ── -->
+<div id="promptModal" class="modal-bg" style="display:none" onclick="if(event.target===this)closePrompt(null)">
+  <div class="modal" style="max-width:400px">
+    <h3 id="promptTitle">Enter value</h3>
+    <p id="promptMsg" style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6"></p>
+    <input id="promptInput" style="width:100%;margin-bottom:16px" placeholder="">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-ghost" onclick="closePrompt(null)">Cancel</button>
+      <button class="btn-teal" onclick="closePrompt(document.getElementById('promptInput').value)">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Change Class Modal ── -->
+<div id="changeClassModal" class="modal-bg" style="display:none" onclick="if(event.target===this)closeChangeClass(null)">
+  <div class="modal" style="max-width:400px">
+    <h3 id="changeClassTitle">Change Class</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Select the class to assign:</p>
+    <select id="changeClassSelect" style="width:100%;margin-bottom:16px"></select>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-ghost" onclick="closeChangeClass(null)">Cancel</button>
+      <button class="btn-teal" onclick="closeChangeClass(document.getElementById('changeClassSelect').value)">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Student Modal ── -->
+<div id="editStudentModal" class="modal-bg" style="display:none" onclick="if(event.target===this)closeEditStudent(null)">
+  <div class="modal" style="max-width:400px">
+    <h3>Edit Student</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Admission No.</p>
+    <input id="editStudentAdmNo" style="width:100%;margin-bottom:14px">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Full Name</p>
+    <input id="editStudentName" style="width:100%;margin-bottom:14px">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Class</p>
+    <select id="editStudentClass" style="width:100%;margin-bottom:16px"></select>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-ghost" onclick="closeEditStudent(null)">Cancel</button>
+      <button class="btn-teal" onclick="closeEditStudent({admNo:document.getElementById('editStudentAdmNo').value,name:document.getElementById('editStudentName').value,classId:document.getElementById('editStudentClass').value})">Save</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const API = '/api/cbt';
+const LICENSE_API = '/api/license';
+const TEACHER_API = '/api/teachers';
+let classes = [], subjects = [], allStudentsCache = [];
+
+// ── Modal helpers (replaces prompt/confirm which Electron blocks) ────────
+let _confirmResolve = null;
+function showConfirm(title, msg, okLabel='Confirm', danger=true){
+  return new Promise(resolve => {
+    _confirmResolve = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent   = msg;
+    const btn = document.getElementById('confirmOkBtn');
+    btn.textContent  = okLabel;
+    btn.className    = danger ? 'btn-red' : 'btn-teal';
+    document.getElementById('confirmModal').style.display = 'flex';
+  });
+}
+function closeConfirm(result){
+  document.getElementById('confirmModal').style.display = 'none';
+  if(_confirmResolve){ _confirmResolve(result); _confirmResolve = null; }
+}
+
+let _promptResolve = null;
+function showPrompt(title, msg, placeholder=''){
+  return new Promise(resolve => {
+    _promptResolve = resolve;
+    document.getElementById('promptTitle').textContent = title;
+    document.getElementById('promptMsg').textContent   = msg;
+    const inp = document.getElementById('promptInput');
+    inp.value       = '';
+    inp.placeholder = placeholder;
+    document.getElementById('promptModal').style.display = 'flex';
+    setTimeout(() => inp.focus(), 50);
+    inp.onkeydown = e => { if(e.key==='Enter') closePrompt(inp.value); if(e.key==='Escape') closePrompt(null); };
+  });
+}
+function closePrompt(value){
+  document.getElementById('promptModal').style.display = 'none';
+  if(_promptResolve){ _promptResolve(value && value.trim() ? value.trim() : null); _promptResolve = null; }
+}
+
+let _changeClassResolve = null;
+function showChangeClass(teacherName, classOptions){
+  return new Promise(resolve => {
+    _changeClassResolve = resolve;
+    document.getElementById('changeClassTitle').textContent = `Change Class — ${teacherName}`;
+    const sel = document.getElementById('changeClassSelect');
+    sel.innerHTML = '<option value="">Select a class…</option>' +
+      classOptions.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('changeClassModal').style.display = 'flex';
+  });
+}
+function closeChangeClass(classId){
+  document.getElementById('changeClassModal').style.display = 'none';
+  if(_changeClassResolve){ _changeClassResolve(classId || null); _changeClassResolve = null; }
+}
+
+let _editStudentResolve = null;
+function showEditStudent(student, classOptions){
+  return new Promise(resolve => {
+    _editStudentResolve = resolve;
+    document.getElementById('editStudentAdmNo').value = student.adm_no;
+    document.getElementById('editStudentName').value = student.name;
+    const sel = document.getElementById('editStudentClass');
+    sel.innerHTML = '<option value="">No class</option>' +
+      classOptions.map(c => `<option value="${c.id}"${String(c.id)===String(student.class_id)?' selected':''}>${c.name}</option>`).join('');
+    document.getElementById('editStudentModal').style.display = 'flex';
+  });
+}
+function closeEditStudent(result){
+  document.getElementById('editStudentModal').style.display = 'none';
+  if(_editStudentResolve){ _editStudentResolve(result); _editStudentResolve = null; }
+}
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Admin token — fetched once from server, allows admin to call /api/cbt routes
+let _adminToken = null;
+async function getAdminToken(){
+  if(_adminToken) return _adminToken;
+  try{
+    const res = await fetch('/api/teachers/admin-token');
+    const data = await res.json();
+    _adminToken = data.token || null;
+  } catch(e){ _adminToken = null; }
+  return _adminToken;
+}
+
+async function api(path, method='GET', body=null, isForm=false){
+  const token = await getAdminToken();
+  const opts = { method, headers: {} };
+  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if(body && !isForm){ opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  if(body && isForm){ delete opts.headers['Content-Type']; opts.body = body; }
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+async function teacherApi(path, method='GET', body=null){
+  const opts = { method };
+  if(body){ opts.headers = {'Content-Type':'application/json'}; opts.body = JSON.stringify(body); }
+  const res = await fetch(TEACHER_API + path, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('tab-exams').style.display = tab==='exams' ? 'block' : 'none';
+  document.getElementById('tab-setup').style.display = tab==='setup' ? 'block' : 'none';
+  document.getElementById('tab-teachers').style.display = tab==='teachers' ? 'block' : 'none';
+  document.getElementById('tab-results').style.display = tab==='results' ? 'block' : 'none';
+  if(tab==='teachers'){ populateTeacherClassDropdown(); loadTeachers(); }
+  if(tab==='results'){ populateAdminResultsSubjectPicker(); }
+}
+
+function populateAdminResultsSubjectPicker(){
+  const sel = document.getElementById('adminResultsSubjectPicker');
+  sel.innerHTML = '<option value="">Select subject to view results...</option>' + subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+let _adminResultsBlocks = [];
+async function loadAdminSubjectResults(){
+  const subjectId = document.getElementById('adminResultsSubjectPicker').value;
+  const container = document.getElementById('adminResultsContainer');
+  if(!subjectId){ container.innerHTML = ''; _adminResultsBlocks = []; return; }
+
+  container.innerHTML = '<div class="empty">Loading...</div>';
+  try{
+    const data = await api('/subject-results/'+subjectId);
+    _adminResultsBlocks = data.blocks || [];
+
+    if(!data.exams.length){
+      container.innerHTML = '<div class="empty">No exams created for this subject yet.</div>';
+      return;
+    }
+
+    const examBlocksHtml = data.blocks.map((block,i) => `
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:14px;color:var(--teal);margin-bottom:4px">${block.exam.title} <span style="color:var(--muted);font-weight:400">(out of ${block.exam.total_marks})</span></h3>
+          ${block.results.length ? `<button class="btn-ghost btn-sm" onclick="downloadAdminExamCSV(${i})">⬇ Download Scores (CSV)</button>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${block.exam.class_name||'No class'} • ${block.exam.teacher_name||'Created by admin'}</div>
+        ${block.results.length ? `
+          <table>
+            <thead><tr><th>#</th><th>Student</th><th>Adm No</th><th>Score</th></tr></thead>
+            <tbody>
+              ${block.results.map((r,i)=>`<tr><td>${i+1}</td><td>${r.student_name}</td><td>${r.adm_no}</td><td><strong>${r.total_score}</strong></td></tr>`).join('')}
+            </tbody>
+          </table>
+        ` : '<div class="empty">No submissions yet for this exam.</div>'}
+      </div>
+    `).join('');
+
+    const summaryHtml = data.summary.length ? `
+      <div style="margin-top:28px;padding-top:20px;border-top:2px solid var(--border)">
+        <h3 style="font-size:14px;margin-bottom:10px">Combined Total / Average (${data.exams.length} exam${data.exams.length>1?'s':''})</h3>
+        <table>
+          <thead><tr><th>#</th><th>Student</th><th>Adm No</th><th>Exams Taken</th><th>Total Score</th><th>Average per Exam</th></tr></thead>
+          <tbody>
+            ${data.summary.map((s,i)=>`<tr><td>${i+1}</td><td>${s.name}</td><td>${s.admNo}</td><td>${s.examsTaken}/${data.exams.length}</td><td><strong>${s.totalScore}</strong></td><td>${s.averageScore}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : '';
+
+    container.innerHTML = examBlocksHtml + summaryHtml;
+  } catch(e){
+    container.innerHTML = `<div class="empty" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+function downloadAdminExamCSV(index){
+  const block = _adminResultsBlocks[index];
+  if(!block || !block.results || !block.results.length){
+    return showToast('No scores to download for this exam', true);
+  }
+  const totalMarks = block.exam.total_marks || 0;
+  const rows = [['Student Name','Score','Percentage']];
+  block.results.forEach(r=>{
+    const pct = totalMarks ? ((r.total_score / totalMarks) * 100).toFixed(1) + '%' : '0%';
+    rows.push([r.student_name, r.total_score, pct]);
+  });
+  const csv = rows.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')
+  ).join('\r\n');
+
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeTitle = (block.exam.title || 'exam').replace(/[^a-z0-9]+/gi, '_');
+  a.download = `${safeTitle}_scores.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function populateTeacherClassDropdown(){
+  const sel = document.getElementById('newTeacherClass');
+  if(!classes.length){
+    sel.innerHTML = '<option value="">No classes registered yet</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">Assign class...</option>' + classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+async function loadTeachers(){
+  const teachers = await teacherApi('/admin/teachers');
+  document.getElementById('teachersEmpty').style.display = teachers.length ? 'none' : 'block';
+  document.getElementById('teachersList').innerHTML = teachers.map(t=>`
+    <tr>
+      <td>${t.name}</td>
+      <td>${t.username}</td>
+      <td>${t.class_name || '<span style="color:var(--red)">Not assigned</span>'}</td>
+      <td>${t.exam_count}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-ghost btn-sm" onclick="changeTeacherClass(${t.id},'${t.name.replace(/'/g,"\\'")}')">Change Class</button>
+        <button class="btn-ghost btn-sm" onclick="resetTeacherPassword(${t.id},'${t.name.replace(/'/g,"\\'")}')">Reset Password</button>
+        <button class="btn-red btn-sm" onclick="deleteTeacher(${t.id},'${t.name.replace(/'/g,"\\'")}')">Remove</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function changeTeacherClass(id, name){
+  if(!classes.length) return showToast('No classes registered yet', true);
+  const classId = await showChangeClass(name, classes);
+  if(!classId) return;
+  const selected = classes.find(c => String(c.id) === String(classId));
+  if(!selected) return showToast('Invalid selection', true);
+  try{
+    await teacherApi('/admin/teachers/'+id+'/class','PATCH',{classId:selected.id});
+    loadTeachers(); showToast(`${name} assigned to ${selected.name}`);
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function addTeacher(){
+  const name = document.getElementById('newTeacherName').value.trim();
+  const username = document.getElementById('newTeacherUsername').value.trim();
+  const password = document.getElementById('newTeacherPassword').value;
+  const classId = document.getElementById('newTeacherClass').value;
+  if(!name || !username || !password) return showToast('Name, username and password required', true);
+  if(!classId) return showToast('Please assign a class to this teacher', true);
+  try{
+    await teacherApi('/admin/teachers','POST',{name,username,password,classId});
+    document.getElementById('newTeacherName').value='';
+    document.getElementById('newTeacherUsername').value='';
+    document.getElementById('newTeacherPassword').value='';
+    document.getElementById('newTeacherClass').value='';
+    loadTeachers(); showToast('Teacher account created');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function resetTeacherPassword(id, name){
+  const newPass = await showPrompt('Reset Password', `Enter new password for ${name}:`, 'New password (min 4 chars)');
+  if(!newPass) return;
+  try{
+    await teacherApi('/admin/teachers/'+id+'/reset-password','PATCH',{password:newPass});
+    showToast('Password reset for ' + name);
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function deleteTeacher(id, name){
+  const ok = await showConfirm('Remove Teacher', `Remove ${name}'s account? Their exams will be kept but unassigned, not deleted.`, 'Remove');
+  if(!ok) return;
+  try{
+    await teacherApi('/admin/teachers/'+id,'DELETE');
+    loadTeachers(); showToast('Teacher account removed');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function loadClasses(){
+  classes = await api('/setup/classes');
+  const opts = classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('exClass').innerHTML = '<option value="">Select class...</option>' + opts;
+  document.getElementById('newStudentClass').innerHTML = opts;
+
+  // Populate class filter dropdown, preserve current selection
+  const filterSel = document.getElementById('filterClass');
+  if(filterSel){
+    const current = filterSel.value;
+    filterSel.innerHTML = '<option value="">All Classes</option>' + opts;
+    if(current) filterSel.value = current;
+  }
+
+  document.getElementById('classesCount').textContent = classes.length ? `(${classes.length})` : '';
+  document.getElementById('classesList').innerHTML = classes.map(c=>`
+    <tr>
+      <td>${c.name}</td>
+      <td style="text-align:right"><button class="btn-red btn-sm" onclick="deleteClass(${c.id},'${c.name.replace(/'/g,"\'")}')">Delete</button></td>
+    </tr>
+  `).join('') || '<tr><td class="empty" colspan="2">No classes yet</td></tr>';
+}
+
+async function deleteClass(id, name){
+  const ok = await showConfirm('Delete Class', `Delete class "${name}"? This cannot be undone.`, 'Delete');
+  if(!ok) return;
+  try{
+    const r = await api('/setup/classes/'+id,'DELETE');
+    loadClasses(); showToast(r.message);
+  } catch(e){ showToast(e.message, true); }
+}
+
+function toggleClassesList(){
+  const wrap = document.getElementById('classesListWrap');
+  const icon = document.getElementById('classesToggleIcon');
+  const collapsed = wrap.style.display === 'none';
+  wrap.style.display = collapsed ? 'block' : 'none';
+  icon.textContent = collapsed ? '▾' : '▸';
+}
+
+function toggleSubjectsList(){
+  const wrap = document.getElementById('subjectsListWrap');
+  const icon = document.getElementById('subjectsToggleIcon');
+  const collapsed = wrap.style.display === 'none';
+  wrap.style.display = collapsed ? 'block' : 'none';
+  icon.textContent = collapsed ? '▾' : '▸';
+}
+
+function toggleStudentsList(){
+  const wrap = document.getElementById('studentsListWrap');
+  const icon = document.getElementById('studentsToggleIcon');
+  const collapsed = wrap.style.display === 'none';
+  wrap.style.display = collapsed ? 'block' : 'none';
+  icon.textContent = collapsed ? '▾' : '▸';
+}
+
+async function loadSubjects(){
+  subjects = await api('/setup/subjects');
+  document.getElementById('exSubject').innerHTML = '<option value="">Select subject...</option>' + subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('subjectsCount').textContent = subjects.length ? `(${subjects.length})` : '';
+  document.getElementById('subjectsList').innerHTML = subjects.map(s=>`
+    <tr>
+      <td>${s.name}</td>
+      <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
+        <button class="btn-ghost btn-sm" onclick="editSubject(${s.id},'${s.name.replace(/'/g,"\\'")}')">Edit</button>
+        <button class="btn-red btn-sm" onclick="deleteSubject(${s.id},'${s.name.replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td class="empty" colspan="2">No subjects yet</td></tr>';
+}
+
+async function editSubject(id, currentName){
+  const newName = await showPrompt('Edit Subject', `Rename "${currentName}" to:`, currentName);
+  if(!newName || newName === currentName) return;
+  try{
+    await api('/setup/subjects/'+id,'PATCH',{name:newName});
+    loadSubjects(); showToast('Subject updated');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function deleteSubject(id, name){
+  const ok = await showConfirm('Delete Subject', `Delete subject "${name}"? This cannot be undone.`, 'Delete');
+  if(!ok) return;
+  try{
+    const r = await api('/setup/subjects/'+id,'DELETE');
+    loadSubjects(); showToast(r.message);
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function loadStudents(){
+  const classId = document.getElementById('filterClass')?.value || '';
+  const url = '/setup/students' + (classId ? '?classId=' + classId : '');
+  const students = await api(url);
+  allStudentsCache = students;
+  const selectedClass = classId ? classes.find(c=>String(c.id)===String(classId)) : null;
+  const countEl = document.getElementById('studentCount');
+  if(countEl){
+    countEl.textContent = students.length
+      ? `${students.length} student${students.length===1?'':'s'}${selectedClass?' in '+selectedClass.name:' total'}`
+      : '';
+  }
+  document.getElementById('studentsList').innerHTML = students.map((s,i)=>`
+    <tr>
+      <td style="color:var(--muted);font-size:12px">${i+1}</td>
+      <td>${s.adm_no}</td>
+      <td>${s.name}</td>
+      <td>${s.class_name||'—'}</td>
+      <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
+        <button class="btn-ghost btn-sm" onclick="editStudent(${s.id})">Edit</button>
+        <button class="btn-red btn-sm" onclick="deleteStudent(${s.id},'${s.name.replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    </tr>`).join('') || '<tr><td class="empty" colspan="5">'+(classId?'No students in this class yet':'No students yet')+'</td></tr>';
+}
+
+async function editStudent(id){
+  const student = allStudentsCache.find(s=>String(s.id)===String(id));
+  if(!student) return showToast('Student not found', true);
+  const result = await showEditStudent(student, classes);
+  if(!result) return;
+  if(!result.admNo.trim() || !result.name.trim()) return showToast('Admission no and name required', true);
+  try{
+    await api('/setup/students/'+id,'PATCH',{admNo:result.admNo,name:result.name,classId:result.classId});
+    loadStudents(); showToast('Student updated');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function promoteAllStudents(){
+  const ok = await showConfirm(
+    '🎓 Promote All Students',
+    'This will move EVERY student to their next class.\n\nStudents in the last class (e.g. SS3) will be REMOVED (graduated).\n\nYou can manually edit individual students afterwards. Continue?',
+    'Promote All',
+    true
+  );
+  if(!ok) return;
+  try{
+    const r = await api('/setup/students/promote-all','POST');
+    showToast(r.message);
+    loadStudents();
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function deleteStudent(id, name){
+  const ok = await showConfirm('Delete Student', `Delete student "${name}"? This cannot be undone.`, 'Delete');
+  if(!ok) return;
+  try{
+    const r = await api('/setup/students/'+id,'DELETE');
+    loadStudents(); showToast(r.message);
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function addClass(){
+  const name = document.getElementById('newClass').value.trim();
+  if(!name) return;
+  try{ await api('/setup/classes','POST',{name}); document.getElementById('newClass').value=''; loadClasses(); showToast('Class added'); }
+  catch(e){ showToast(e.message, true); }
+}
+
+async function addSubject(){
+  const name = document.getElementById('newSubject').value.trim();
+  if(!name) return;
+  try{ await api('/setup/subjects','POST',{name}); document.getElementById('newSubject').value=''; loadSubjects(); showToast('Subject added'); }
+  catch(e){ showToast(e.message, true); }
+}
+
+async function addStudent(){
+  const admNo = document.getElementById('newAdmNo').value.trim();
+  const name = document.getElementById('newStudentName').value.trim();
+  const classId = document.getElementById('newStudentClass').value;
+  if(!admNo || !name) return showToast('Admission no and name required', true);
+  try{
+    await api('/setup/students','POST',{admNo,name,classId});
+    document.getElementById('newAdmNo').value=''; document.getElementById('newStudentName').value='';
+    loadStudents(); showToast('Student added');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function bulkAddStudents(){
+  const text = document.getElementById('bulkStudents').value.trim();
+  if(!text) return;
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const students = lines.map(l=>{
+    const [admNo,name,className] = l.split(',').map(x=>x.trim());
+    // Normalize: lowercase + remove all spaces for fuzzy class matching
+    // e.g. "JSS 1A", "JSS1A", "jss1a", "Jss 1 A" all match "JSS1"
+    const normalize = s => (s||'').toLowerCase().replace(/\s+/g,'');
+    const cls = classes.find(c=>
+      normalize(c.name) === normalize(className) ||
+      c.name.toLowerCase() === className?.toLowerCase()
+    );
+    return { admNo, name, classId: cls?.id || null };
+  });
+  try{
+    const r = await api('/setup/students/bulk','POST',{students});
+    document.getElementById('bulkStudents').value='';
+    loadStudents();
+    if(r.failed && r.failed.length){
+      const details = r.failed.map(f=>`${f.admNo} (${f.name}): ${f.reason}`).join('\n');
+      showToast(r.message, true);
+      showConfirm('Bulk Add — Skipped Students', 'Some students were skipped:\n' + details, 'OK', false);
+    } else {
+      showToast(r.message);
+    }
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function loadExams(){
+  const exams = await api('/');
+  const tbody = document.querySelector('#examsTable tbody');
+  document.getElementById('examsEmpty').style.display = exams.length ? 'none' : 'block';
+  tbody.innerHTML = exams.map(e=>`
+    <tr>
+      <td><strong>${e.title}</strong></td>
+      <td>${e.class_name||'—'}</td>
+      <td>${e.subject_name||'—'}</td>
+      <td>${e.question_count}</td>
+      <td>${e.submissions}</td>
+      <td><span class="badge badge-${e.status}">${e.status}</span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-ghost btn-sm" onclick="manageExam(${e.id})">Manage</button>
+        <button class="btn-red btn-sm" onclick="deleteExam(${e.id},'${e.title.replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function createExam(){
+  const title = document.getElementById('exTitle').value.trim();
+  if(!title) return showToast('Title required', true);
+  const body = {
+    title,
+    subjectId: document.getElementById('exSubject').value || null,
+    classId: document.getElementById('exClass').value || null,
+    session: document.getElementById('exSession').value,
+    term: document.getElementById('exTerm').value,
+    durationMinutes: document.getElementById('exDuration').value,
+    totalMarks: document.getElementById('exMarks').value,
+    instructions: document.getElementById('exInstructions').value
+  };
+  try{
+    await api('/','POST',body);
+    document.getElementById('exTitle').value=''; document.getElementById('exInstructions').value='';
+    loadExams(); showToast('Exam created!');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function deleteExam(id, title){
+  const ok = await showConfirm('Delete Exam', `Delete "${title}"? This removes all questions and submissions.`, 'Delete');
+  if(!ok) return;
+  try{ await api('/'+id,'DELETE'); loadExams(); showToast('Exam deleted'); }
+  catch(e){ showToast(e.message, true); }
+}
+
+function manageExam(id){
+  window.open('/manage.html?id='+id, '_blank');
+}
+
+function showActivateScreen(){
+  document.getElementById('activateScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+}
+function updateTrialBanner(status){
+  var banner = document.getElementById('trialBanner');
+  if(!banner) return;
+
+  // Fully activated and not expiring soon — hide banner
+  if(status.activated && !status.expiringSoon){
+    banner.className='';
+    return;
+  }
+
+  var icon, msg, cls;
+
+  if(status.activated && status.expiringSoon){
+    // License expiring within 30 days
+    var d = status.daysRemaining || 0;
+    icon = '⚠️';
+    msg = 'LICENSE EXPIRING — '+d+' day'+(d===1?'':'s')+' left! Renew now to avoid interruption. Expires: '+status.expiryDate+'.';
+    cls = d<=7 ? 'trial-critical' : 'trial-warn';
+  } else if(!status.activated && status.expired){
+    // Yearly license expired
+    icon = '🔒';
+    msg = 'LICENSE EXPIRED — Renew your annual license to continue. Contact Infolab Technology Service.';
+    cls = 'trial-critical';
+  } else {
+    // Free trial
+    var d2 = status.daysRemaining || 0;
+    icon = d2>7?'⏳':d2>0?'⚠️':'🔒';
+    msg = d2>7  ? 'FREE TRIAL — '+d2+' days remaining' :
+          d2>0  ? 'TRIAL EXPIRING — '+d2+' day'+(d2===1?'':'s')+' left! Activate now.' :
+                  'TRIAL EXPIRED — Contact Infolab to activate.';
+    cls = d2>7?'trial-ok':d2>0?'trial-warn':'trial-critical';
+  }
+
+  document.getElementById('trialIcon').textContent = icon;
+  document.getElementById('trialMsg').textContent = msg;
+  banner.className = cls;
+  document.querySelector('#trialBanner .tb-btn').textContent = (status.activated || status.expired) ? '🔑 Renew License' : '🔑 Activate Full Version';
+}
+async function checkActivation(){
+  try{
+    const res = await fetch(LICENSE_API + '/status');
+    const status = await res.json();
+
+    function showMain(){
+      document.getElementById('activateScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      updateTrialBanner(status);
+      loadClasses().then(loadSubjects).then(loadStudents).then(loadExams);
+      loadNetworkInfo();
+    }
+    function showActivate(msg, isRenewal){
+      document.getElementById('activateScreen').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      var p = document.querySelector('#activateScreen p.sub');
+      if(p && msg) p.textContent = msg;
+      // Hide school name field on renewal (school already known)
+      var schoolNameInput = document.getElementById('activateSchoolName');
+      if(schoolNameInput) schoolNameInput.style.display = isRenewal ? 'none' : '';
+      var btn = document.querySelector('#activateScreen button.btn-teal');
+      if(btn) btn.textContent = isRenewal ? '🔄 Renew License' : 'Activate';
+    }
+
+    if(status.activated){
+      showMain();
+    } else if(status.expired){
+      // Yearly license expired — show renewal screen
+      showActivate('Your annual license has expired. Enter a new activation key from Infolab to renew for another 12 months.', true);
+    } else if(status.daysRemaining === 0 && !status.trial){
+      // Trial expired
+      showActivate('Your 30-day free trial has expired. Enter your activation key from Infolab to continue.', false);
+    } else {
+      // Trial active or new install
+      showMain();
+    }
+  } catch(e){
+    document.getElementById('activateScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+  }
+}
+
+async function loadNetworkInfo(){
+  try{
+    const info = await (await fetch('/api/network-info')).json();
+    const contentEl = document.getElementById('networkInfoContent');
+    const warnEl = document.getElementById('networkInfoWarning');
+    if(info.ip){
+      contentEl.innerHTML = `IP Address: <span style="user-select:all">${info.ip}</span>`;
+      warnEl.style.display = 'none';
+    } else {
+      contentEl.textContent = 'Could not detect network address';
+      warnEl.style.display = 'block';
+      warnEl.textContent = 'This PC may not be connected to Wi-Fi or a network cable. Students on other computers will not be able to connect until it is.';
+    }
+  } catch(e){
+    document.getElementById('networkInfoContent').textContent = 'Unable to load network info';
+  }
+}
+
+async function activateApp(){
+  const key = document.getElementById('activateKey').value.trim();
+  const schoolName = document.getElementById('activateSchoolName').value.trim();
+  const errEl = document.getElementById('activateError');
+  errEl.style.display = 'none';
+  if(!key) return;
+  try{
+    const res = await fetch(LICENSE_API + '/activate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ key, schoolName })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Activation failed');
+    checkActivation();
+  } catch(e){
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+// Init — wait for DOM
+document.addEventListener('DOMContentLoaded', function(){ checkActivation(); });
+</script>
+</body>
+</html>

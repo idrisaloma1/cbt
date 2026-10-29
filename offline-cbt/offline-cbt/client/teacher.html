@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Portal — Offline CBT</title>
+<style>
+  :root{--navy:#0A1628;--teal:#00B4A6;--teal-d:#008F83;--bg:#0f1623;--card:#162132;--border:#27344a;--text:#e7ecf3;--muted:#8a96ab;--red:#ef4444;--green:#22c55e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);}
+  .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:380px;width:100%;}
+  .login-card h1{font-size:20px;margin-bottom:6px;text-align:center;} .login-card h1 span{color:var(--teal);}
+  .login-card p.sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;font-weight:600;}
+  input{width:100%;background:#0c1320;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+  button{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;}
+  button:hover{background:var(--teal-d);}
+  .error{color:var(--red);font-size:13px;margin-bottom:12px;text-align:center;}
+
+  .topbar{background:var(--navy);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+  .topbar h1{font-size:16px;font-weight:700;} .topbar h1 span{color:var(--teal);}
+  .topbar .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:14px;}
+  .topbar button{background:transparent;border:1px solid var(--border);padding:7px 14px;font-size:12px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px;}
+  .card h2{font-size:15px;margin-bottom:16px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  select,textarea{background:#0c1320;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;}
+  select{flex:1;min-width:140px;} textarea{width:100%;min-height:70px;resize:vertical;}
+  .card input{margin-bottom:0;flex:1;min-width:140px;}
+  .field{flex:1;min-width:160px;}
+  .btn-teal{background:var(--teal);color:#fff;} .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-red{background:rgba(239,68,68,0.15);color:#fca5a5;} .btn-sm{padding:6px 12px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:10px 12px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);}
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-draft{background:rgba(148,163,184,0.15);color:#cbd5e1;}
+  .badge-published{background:rgba(34,197,94,0.15);color:#86efac;}
+  .badge-closed{background:rgba(239,68,68,0.15);color:#fca5a5;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;display:none;z-index:999;}
+  .toast.show{display:block;} .toast.error{background:var(--red);}
+  .empty{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+  label.inline{margin-bottom:5px;}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="center-wrap">
+  <div class="login-card">
+    <h1>Teacher <span>Portal</span></h1>
+    <p class="sub">Log in to manage your exams</p>
+    <div id="loginError" class="error" style="display:none"></div>
+    <label>Username</label>
+    <input id="username" placeholder="Your username">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Your password">
+    <button style="width:100%" onclick="login()">Log In</button>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none">
+  <div class="topbar">
+    <h1>Teacher <span>Portal</span></h1>
+    <div class="who">
+      <span id="teacherName"></span>
+      <button onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>Create New Exam</h2>
+      <div class="row">
+        <div class="field"><label class="inline">Title</label><input id="exTitle" placeholder="e.g. Mathematics Mid-Term"></div>
+        <div class="field"><label class="inline">Subject</label><select id="exSubject"></select></div>
+        <div class="field">
+          <label class="inline">Class</label>
+          <input id="exClassDisplay" disabled style="opacity:0.85;cursor:not-allowed;font-weight:600;color:var(--teal)">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label class="inline">Session</label><input id="exSession" value="2025/2026"></div>
+        <div class="field"><label class="inline">Term</label><select id="exTerm"><option value="1">First Term</option><option value="2">Second Term</option><option value="3">Third Term</option></select></div>
+        <div class="field"><label class="inline">Duration (mins)</label><input id="exDuration" type="number" value="60"></div>
+        <div class="field"><label class="inline">Total Marks</label><input id="exMarks" type="number" value="100"></div>
+      </div>
+      <div class="row"><div class="field" style="flex:1 0 100%"><label class="inline">Instructions (optional)</label><textarea id="exInstructions"></textarea></div></div>
+      <button class="btn-teal" onclick="createExam()">+ Create Exam</button>
+    </div>
+
+    <div class="card">
+      <h2>My Exams</h2>
+      <table id="examsTable">
+        <thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Questions</th><th>Submissions</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="examsEmpty" class="empty" style="display:none">You haven't created any exams yet.</div>
+    </div>
+
+    <div class="card">
+      <h2>Results by Subject</h2>
+      <div class="row">
+        <select id="subjectResultsPicker" style="max-width:260px" onchange="loadSubjectResults()"></select>
+      </div>
+      <div id="subjectResultsContainer"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API = '/api/cbt';
+const TEACHER_API = '/api/teachers';
+let lastResultsBlocks = [];
+
+function downloadExamCSV(index){
+  const block = lastResultsBlocks[index];
+  if(!block || !block.results || !block.results.length){
+    return showToast('No scores to download for this exam', true);
+  }
+  const totalMarks = block.exam.total_marks || 0;
+  const rows = [['Student Name','Score','Percentage']];
+  block.results.forEach(r=>{
+    const pct = totalMarks ? ((r.total_score / totalMarks) * 100).toFixed(1) + '%' : '0%';
+    rows.push([r.student_name, r.total_score, pct]);
+  });
+  const csv = rows.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')
+  ).join('\r\n');
+
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeTitle = (block.exam.title || 'exam').replace(/[^a-z0-9]+/gi, '_');
+  a.download = `${safeTitle}_scores.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function getToken(){ return localStorage.getItem('cbt_teacher_token'); }
+function getTeacher(){ try{ return JSON.parse(localStorage.getItem('cbt_teacher')); }catch{ return null; } }
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isError?' error':'');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+async function api(path, method='GET', body=null, useTeacherApi=false){
+  const opts = { method, headers: {} };
+  const token = getToken();
+  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if(body){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const res = await fetch((useTeacherApi?TEACHER_API:API) + path, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error||'Request failed');
+  return data;
+}
+
+async function login(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  if(!username || !password) return;
+  try{
+    const data = await api('/login','POST',{username,password},true);
+    localStorage.setItem('cbt_teacher_token', data.token);
+    localStorage.setItem('cbt_teacher', JSON.stringify(data.teacher));
+    showDashboard();
+  } catch(e){
+    errEl.textContent = e.message; errEl.style.display = 'block';
+  }
+}
+
+function logout(){
+  localStorage.removeItem('cbt_teacher_token');
+  localStorage.removeItem('cbt_teacher');
+  location.reload();
+}
+
+function showDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  const teacher = getTeacher();
+  document.getElementById('teacherName').textContent = teacher?.name || '';
+  document.getElementById('exClassDisplay').value = teacher?.className || '(no class assigned — contact admin)';
+  loadSubjects(); loadExams();
+}
+
+async function loadSubjects(){
+  const subjects = await api('/setup/subjects');
+  document.getElementById('exSubject').innerHTML = '<option value="">Select subject...</option>' + subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('subjectResultsPicker').innerHTML = '<option value="">Select subject to view results...</option>' + subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+async function loadExams(){
+  const exams = await api('/');
+  const tbody = document.querySelector('#examsTable tbody');
+  document.getElementById('examsEmpty').style.display = exams.length ? 'none' : 'block';
+  tbody.innerHTML = exams.map(e=>`
+    <tr>
+      <td><strong>${e.title}</strong></td>
+      <td>${e.class_name||'—'}</td>
+      <td>${e.subject_name||'—'}</td>
+      <td>${e.question_count}</td>
+      <td>${e.submissions}</td>
+      <td><span class="badge badge-${e.status}">${e.status}</span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-ghost btn-sm" onclick="manageExam(${e.id})">Manage</button>
+        <button class="btn-red btn-sm" onclick="deleteExam(${e.id},'${e.title.replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function createExam(){
+  const title = document.getElementById('exTitle').value.trim();
+  if(!title) return showToast('Title required', true);
+  const body = {
+    title,
+    subjectId: document.getElementById('exSubject').value || null,
+    session: document.getElementById('exSession').value,
+    term: document.getElementById('exTerm').value,
+    durationMinutes: document.getElementById('exDuration').value,
+    totalMarks: document.getElementById('exMarks').value,
+    instructions: document.getElementById('exInstructions').value
+  };
+  try{
+    await api('/','POST',body);
+    document.getElementById('exTitle').value=''; document.getElementById('exInstructions').value='';
+    loadExams(); showToast('Exam created!');
+  } catch(e){ showToast(e.message, true); }
+}
+
+async function deleteExam(id, title){
+  if(!confirm(`Delete "${title}"? This removes all questions and submissions.`)) return;
+  try{ await api('/'+id,'DELETE'); loadExams(); showToast('Exam deleted'); }
+  catch(e){ showToast(e.message, true); }
+}
+
+function manageExam(id){
+  // Pass the teacher token via URL so manage.html can authenticate its API calls too
+  window.open('/manage.html?id='+id+'&t='+encodeURIComponent(getToken()), '_blank');
+}
+
+async function loadSubjectResults(){
+  const subjectId = document.getElementById('subjectResultsPicker').value;
+  const container = document.getElementById('subjectResultsContainer');
+  if(!subjectId){ container.innerHTML = ''; lastResultsBlocks = []; return; }
+
+  container.innerHTML = '<div class="empty">Loading...</div>';
+  try{
+    const data = await api('/subject-results/'+subjectId);
+    lastResultsBlocks = data.blocks || [];
+
+    if(!data.exams.length){
+      container.innerHTML = '<div class="empty">No exams created for this subject yet.</div>';
+      return;
+    }
+
+    const examBlocksHtml = data.blocks.map((block,i) => `
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:14px;color:var(--teal);margin-bottom:10px">${block.exam.title} <span style="color:var(--muted);font-weight:400">(out of ${block.exam.total_marks})</span></h3>
+          ${block.results.length ? `<button class="btn-ghost btn-sm" onclick="downloadExamCSV(${i})">⬇ Download Scores (CSV)</button>` : ''}
+        </div>
+        ${block.results.length ? `
+          <table>
+            <thead><tr><th>#</th><th>Student</th><th>Adm No</th><th>Score</th></tr></thead>
+            <tbody>
+              ${block.results.map((r,i)=>`<tr><td>${i+1}</td><td>${r.student_name}</td><td>${r.adm_no}</td><td><strong>${r.total_score}</strong></td></tr>`).join('')}
+            </tbody>
+          </table>
+        ` : '<div class="empty">No submissions yet for this exam.</div>'}
+      </div>
+    `).join('');
+
+    const summaryHtml = data.summary.length ? `
+      <div style="margin-top:28px;padding-top:20px;border-top:2px solid var(--border)">
+        <h3 style="font-size:14px;margin-bottom:10px">Combined Total / Average (${data.exams.length} exam${data.exams.length>1?'s':''})</h3>
+        <table>
+          <thead><tr><th>#</th><th>Student</th><th>Adm No</th><th>Exams Taken</th><th>Total Score</th><th>Average per Exam</th></tr></thead>
+          <tbody>
+            ${data.summary.map((s,i)=>`<tr><td>${i+1}</td><td>${s.name}</td><td>${s.admNo}</td><td>${s.examsTaken}/${data.exams.length}</td><td><strong>${s.totalScore}</strong></td><td>${s.averageScore}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : '';
+
+    container.innerHTML = examBlocksHtml + summaryHtml;
+  } catch(e){
+    container.innerHTML = `<div class="empty" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+// Init — check if already logged in
+if(getToken()){
+  showDashboard();
+}
+document.getElementById('password').addEventListener('keypress', e=>{ if(e.key==='Enter') login(); });
+</script>
+</body>
+</html>
